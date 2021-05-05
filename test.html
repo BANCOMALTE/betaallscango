@@ -1,0 +1,396 @@
+
+<html>
+    <head>
+        <title>AllScan Go</title>
+        
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <font color="blue"><p>BENVENUTO SU ALLSCAN GO,LA VERSIONE LEGGERA DI ALLSCAN</p></font>
+
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+  <script src="https://tiles.unwiredmaps.com/js/leaflet-unwired.js"></script>
+  <script src="https://cdn-geoweb.s3.amazonaws.com/esri-leaflet/0.0.1-beta.5/esri-leaflet.js"></script>
+  <script src="https://cdn-geoweb.s3.amazonaws.com/esri-leaflet-geocoder/0.0.1-beta.5/esri-leaflet-geocoder.js"></script>
+   <link rel="stylesheet" type="text/css" href="https://cdn-geoweb.s3.amazonaws.com/esri-leaflet-geocoder/0.0.1-beta.5/esri-leaflet-geocoder.css">   
+   <!-- location control -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
+<!-- location control -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+<!-- geocoding plugin -->
+<link rel="stylesheet" href="https://maps.locationiq.com/v2/libs/leaflet-geocoder/1.9.5/leaflet-geocoder-locationiq.min.css">
+<script src="https://maps.locationiq.com/v2/libs/leaflet-geocoder/1.9.5/leaflet-geocoder-locationiq.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-plugins/3.0.2/control/Permalink.js"></script>
+     
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+    </script>
+    <style>
+        #map { height: 100%; width: 100%; }
+        body { margin:15px; padding:15px; }
+    
+
+</style>
+<script>
+var defaultmarkericon = L.icon({
+    iconUrl: 'default.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+	/* 
+
+        Tramite queste variabili è possibile personalizzare i parametri della query che verrà effettuata
+
+        token (string): token Unwired Labs
+        radio (string): tecnologia radio
+        mcc (int): codice paese
+        mnc (int): codice operatore
+        lac (int): location area code (default: 1)
+        cid (int): cell id da richiedere al servizio
+        psc (int): primary scrambling code (default: 0)
+        address (boolean): impostare a 1 per richiedere anche l'indirizzo, altrimenti 0
+
+*/
+
+function AllScan() {
+    var NumToken = 0,
+    arrayToken = $("#token").val().replace(/\s+/g, '').split(','),
+    secid = $("#secid").val(),
+    colorebande = $("#colorebande").val(),
+    iconemarker = $("#iconemarker").val(),
+	band = $("#band").val(),
+	enodeb = $("#enodeb").val(),
+    radio = '"lte"',
+    mcc = $("#mcc").val(),
+    mnc = $("#mnc").val(),
+    lac = 1,
+    startcid = $("#startcid").val(),
+    stopcid = $("#stopcid").val(),
+    coordinatedestra = $("#coordinatedestra").val(),
+    coordinatesinistra = $("#coordinatesinistra").val(),
+    verificafake = $("#verificafake").val(),
+    psc = 0,
+    address = 1;
+
+        const [latdestraalto, londestraalto] = coordinatedestra.split(',');
+        const [latsinistrabasso, lonsinistrabasso] = coordinatesinistra.split(',');
+           
+
+   
+        startcid = stopcid = enodeb * 256 + Number(secid);
+        for(var cid = startcid; cid <= stopcid; cid++) {
+            var request = {
+                "async": false,
+                "crossDomain": true,
+                "url": "https://eu1.unwiredlabs.com/v2/process.php",
+                "method": "POST",
+                "headers": {},
+                "processData": false,
+                "data": "{\"token\":\"" + arrayToken[NumToken] + "\", \"radio\": " + radio + ", \"mcc\": " + mcc + ", \"mnc\": " + mnc + ", \"cells\": [{ \"lac\": " + lac + ", \"cid\": " + cid + ", \"psc\": " + psc + " }], \"address\": " + address + "}"
+            }
+
+            $.ajax(request).done(function (APIresponse) {
+                //se query ok
+                enodeb = parseInt(cid/256);
+                sec = cid - (enodeb * 256);
+		     if (mnc == 88 && (sec == 0 || sec == 1 || sec == 2 || sec == 3 || sec == 4 || sec == 5)) {
+                         band = "B3";
+			  colorebande = "green";
+                         iconemarker = L.icon({
+    iconUrl: 'b3.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                 } else if (mnc == 88 &&  (sec == 6 || sec == 7 || sec == 8 || sec == 9 || sec == 10 || sec == 11)) {
+                     band = "B20";
+			  colorebande = "blue";
+                     iconemarker = L.icon({
+    iconUrl: 'b20.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                 } else if (mnc == 88 && (sec == 12 || sec == 13 || sec == 14 || sec == 15 || sec == 16 || sec == 17)) {
+                     band = "B7";
+			 colorebande = "magenta";
+                     iconemarker = L.icon({
+    iconUrl: 'b7.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                 } else if (mnc == 88  && (sec == 24 || sec == 25 || sec == 26 || sec == 27 || sec == 28 || sec == 29)) {
+			    
+			           band = "B38";  colorebande = "darkblue"; iconemarker = L.icon({
+    iconUrl: 'b38.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});	     
+		     
+			    
+			    } else if  (mnc == 88  && (sec == 18 || sec == 19 || sec == 20 || sec == 21 || sec == 22 || sec == 23)) {
+                     band = "B1";  colorebande = "orange"; iconemarker = L.icon({
+    iconUrl: 'b1.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});}
+                     else if (mnc == 10 && (sec == 31 || sec == 32 || sec == 33 || sec == 33)) {
+                         band = "B3";
+			      colorebande = "green";
+                         iconemarker = L.icon({
+    iconUrl: 'b3.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                 } else if (mnc == 10  && (sec == 11 || sec == 12 || sec == 13 || sec == 14)) {
+                     band = "B20";
+			  colorebande = "blue";
+                     iconemarker = L.icon({
+    iconUrl: 'b20.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                 } else if (mnc == 10 && (sec == 51 || sec == 52 || sec == 53 || sec == 54)) {
+                     band = "B7";
+			 colorebande = "magenta";
+                     iconemarker = L.icon({
+    iconUrl: 'b7.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                 } else if  (mnc == 10  && (sec == 41 || sec == 42 || sec == 43 || sec == 44)) {
+                     band = "B1";  colorebande = "orange"; iconemarker = L.icon({
+    iconUrl: 'b1.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+}); }  else if  (mnc == 10  && (sec == 91 || sec == 92 || sec == 93 || sec == 94)) {
+                     band = "B8";  colorebande = "brown"; iconemarker = L.icon({
+    iconUrl: 'B8.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+}); }
+                    else if (mnc == 99 && (sec == 1 || sec == 2 || sec == 3 )) {
+                         band = "B3";
+			     colorebande = "green";
+                         iconemarker = L.icon({
+    iconUrl: 'b3.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                 } else if (mnc == 99  && (sec == 4 || sec == 5 || sec == 6 )) {
+                     band = "B7";
+			 colorebande = "magenta";
+                     iconemarker = L.icon({
+    iconUrl: 'b7.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                 } else if (mnc == 50 && (sec == 61 || sec == 62 || sec == 63 || sec == 41 || sec == 42 || sec == 43)) {
+                         band = "B7";
+			  colorebande = "magenta";
+                         iconemarker = L.icon({
+    iconUrl: 'b7.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                
+                 } else if (mnc == 50 && (sec == 81 || sec == 82 || sec == 83 )) {
+                     band = "B3";
+			 colorebande = "green";
+                     iconemarker = L.icon({
+    iconUrl: 'b3.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});
+                 } else if  (mnc == 50 && (sec == 21 || sec == 22 || sec == 23 )) {
+                     band = "B1";  colorebande = "orange"; iconemarker = L.icon({
+    iconUrl: 'b1.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+}); } else { band = "";  iconemarker = L.icon({
+    iconUrl: 'default.png',
+   iconSize:     [26, 42], // size of the icon
+   iconAnchor:   [13, 41], // point of the icon which will correspond to marker's location
+   popupAnchor:  [-1, -39] // point from which the popup should open relative to the iconAnchor
+});}
+
+
+                if(APIresponse.status == "ok" && ((APIresponse.lat >= latsinistrabasso && APIresponse.lat <= latdestraalto) && (APIresponse.lon >= lonsinistrabasso && APIresponse.lon <= londestraalto ) && verificafake == "Si")) {
+                 var marker = L.marker([ APIresponse.lat, APIresponse.lon], {icon: iconemarker}).addTo(map);
+                        marker.bindPopup("<b>LAT:</b> " + APIresponse.lat + "<br /><b>LON:</b> " + APIresponse.lon + "<br /><b>CID:</b> " + cid + "<br /><b>ENODEB:</b> " + enodeb + "<br /><b>SECTOR:</b> " + secid + "<br /><b>BAND:</b> " + band.fontcolor(colorebande) + "<br />").openPopup();
+                         marker.bindTooltip(enodeb + ":" + secid + " " + band.fontcolor(colorebande)  , {permanent: true, direction: 'bottom'}).openTooltip();
+                } else if(APIresponse.status == "ok" && verificafake == "No") {
+                    var marker = L.marker([ APIresponse.lat, APIresponse.lon], {icon: iconemarker}).addTo(map);
+                        marker.bindPopup("<b>LAT:</b> " + APIresponse.lat + "<br /><b>LON:</b> " + APIresponse.lon + "<br /><b>CID:</b> " + cid + "<br /><b>ENODEB:</b> " + enodeb + "<br /><b>SECTOR:</b> " + secid + "<br /><b>BAND:</b> " + band.fontcolor(colorebande) + "<br />").openPopup();
+                         marker.bindTooltip(enodeb + ":" + secid + " " + band.fontcolor(colorebande)  , {permanent: true, direction: 'bottom'}).openTooltip();
+                } 
+                //altrimenti, messaggio di errore
+                else { if(APIresponse.message == "Token balance over; you have used up all your requests for today" && NumToken < arrayToken.length - 1) {NumToken++; cid--;}
+
+                    alert("Errore: " + APIresponse.message + "Attenzione!Se stai usando un gruppo di token potrebbe anche non essere vero!Oppure, stai cercando una cella esterna ai confini settati, non la troverai. Se non stai utilizzando il filtro fake, ricordati di selezionare la voce no, nell'apposita funzione. Dunque, ti invitiamo a controllare la correttezza dei dati digitati.Grazie.")
+    alert("Not found: " + cid)
+                }
+            });
+        }
+    }
+
+
+</script>
+</head>
+<body>
+    <input type="number"   value="222"   id="mcc" placeholder="MCC" required>
+    <input type="number" list="MNCs" name="MNC" id="mnc" placeholder="MNC" required>
+    <datalist id="MNCs">
+        <option value="10">VODAFONE</option>
+        <option value="1">TIM</option>
+        <option value="99">H3G</option>
+        <option value="50">ILIAD</option>
+        <option value="88">WINDTRE</option>
+    </datalist>
+    <select id="verificafake">
+        <option selected disabled>Verifica dei Fake</option>
+   <option value="Si">SI</option>
+       <option value="No">NO</option>
+      
+       
+     </select>
+    <input type="number" id="enodeb" placeholder="eNb" required>
+    <input type="number" id="secid" placeholder="Sector" required>
+   
+    <input type="text" id="token" placeholder="Token" required>
+    
+     
+        <input type="text" id="coordinatedestra" placeholder="LatLng Destra" required>
+        <input type="text" id="coordinatesinistra" placeholder="LatLng Sinistra" required>
+    <button onclick="AllScan()">Go</button>
+
+    <div id="result"></div>
+    <div id="map"></div>
+    <script>
+        let btn = document.createElement('button');
+btn.innerText = 'Delete Marker';
+btn.onclick =  function() {
+  map.removeLayer(results);
+}
+
+
+                    // API token goes here
+var key = "9f2c971b2cd69c";
+
+// Add layers that we need to the map
+var streets = L.tileLayer.Unwired({key: key, scheme: "streets"});
+	    var osm = L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: 'Data © <a href="http://osm.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18
+  });
+	    var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+});
+
+
+// Initialize the map
+
+var map = L.map('map', {
+        center: [ 42.6197784,11.5083833 ], //map loads with this location as center
+        zoom: 6,
+        layers: [streets] // Show 'streets' by default
+});
+
+ 
+// Add the 'layers' control
+L.control.layers({
+        "Streets": streets,
+        "OSM": osm,
+	"SAT": satellite,
+    }, null, {
+        position: "topright"
+    }).addTo(map);
+
+    map.on("click", function(e){
+        var mp = new L.Marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+        alert(mp.getLatLng());
+ }); 
+ var gpslayer = new L.LayerGroup().addTo(map);
+ // Add the 'scale' control
+    L.control.scale().addTo(map);
+    L.control.locate({
+        position: "bottomright",
+	     layer: gpslayer,
+    }).addTo(map);
+
+
+//Add the 'search' control
+	    
+	    var searchicon = L.icon({
+    iconUrl: 'me.png',
+    
+
+    iconSize:     [38, 38], // size of the icon
+    
+  
+});
+
+var searchControl = new L.esri.Controls.Geosearch().addTo(map);
+
+            var results = new L.LayerGroup().addTo(map);
+
+              searchControl.on('results', function(data){
+                results.clearLayers();
+                for (var i = data.results.length - 1; i >= 0; i--) {
+                  results.addLayer(L.marker(data.results[i].latlng ,  {icon: searchicon}).bindPopup(btn, {
+  maxWidth: 'auto'
+})),map.addLayer(results);
+                }
+              });
+
+        
+         const maps = [streets]; 
+        const resetcontrol = L.Control.extend({
+
+    options: {
+        position: 'topright'
+    },
+    onAdd: function () {
+        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+        container.style.cursor= 'pointer';
+        container.innerHTML = '<a class="darkmodetoggle"><i class="material-icons">delete</i></a>';
+
+        container.onclick = function () {
+          map.eachLayer(function (layer) {
+            if(!maps.includes(layer) && layer != osm && layer != satellite  && layer != results && layer != gpslayer )
+              map.removeLayer(layer);
+          });
+        };
+        return container;
+    },
+
+});
+map.addControl(new resetcontrol);
+	    var gpsbest = new L.Control.Permalink({ useLocation: true, text: null })
+	        map.addControl(gpsbest);
+	
+        </script>
+    </script>
+</body>
+</html>
