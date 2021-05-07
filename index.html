@@ -327,9 +327,9 @@ L.control.layers({
         position: "topright"
     }).addTo(map);
 
-    map.on("click", function(e){
+     map.on("dblclick", function(e){
         var mp = new L.Marker([e.latlng.lat, e.latlng.lng]).addTo(map);
-        alert(mp.getLatLng());
+        mp.bindPopup(e.latlng.lat + ',' + e.latlng.lng);
  }); 
  var gpslayer = new L.LayerGroup().addTo(map);
  // Add the 'scale' control
